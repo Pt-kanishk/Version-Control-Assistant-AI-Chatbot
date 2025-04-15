@@ -1,0 +1,59 @@
+from openai import OpenAI
+import gradio as gr
+import re
+
+class GitAssistant:
+    def __init__(self, api_key):
+        self.client = OpenAI(api_key=api_key)
+        self.system_message = """You are a specialized AI assistant for Git, GitHub, and version control systems. 
+        Your responses should be:
+        - Focused exclusively on version control concepts, Git commands, and GitHub usage
+        - Technical and concise
+        - Include practical examples when applicable
+        - Warn about potential pitfalls/dangers in destructive commands
+        - Format code samples with markdown
+        - For non-Git/GitHub questions, politely decline to answer"""
+
+    def get_git_answer(self, question):
+        try:
+            response = self.client.chat.completions.create(
+                model="gpt-3.5-turbo",
+                messages=[
+                    {"role": "system", "content": self.system_message},
+                    {"role": "user", "content": question}
+                ],
+                temperature=0.3,
+                max_tokens=500
+            )
+            return response.choices[0].message.content.strip()
+        except Exception as e:
+            return f"Error: {str(e)}"
+
+# Initialize the assistant
+api_key = "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"  # Replace with your actual API key
+assistant = GitAssistant(api_key)
+
+def respond(message, history):
+    response = assistant.get_git_answer(message)
+    return response
+
+# Create the Gradio interface
+demo = gr.ChatInterface(
+    fn=respond,
+    title="Git Expert Assistant",
+    description="Ask anything about Git, GitHub, and version control systems",
+    examples=[
+        "How to undo the last commit?",
+        "Explain branching strategy in Git",
+        "What's the difference between merge and rebase?"
+    ],
+    theme="soft",
+    css="""
+    .message.user {background: #000000 !important}
+    .message.bot {background: #000000 !important}
+    .code {font-family: monospace !important}
+    """
+)
+
+if __name__ == "__main__":
+    demo.launch()
